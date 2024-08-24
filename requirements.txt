@@ -1,0 +1,7 @@
+pandasai
+streamlit
+python-dotenv
+groq
+gspread 
+oauth2client
+
