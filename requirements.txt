@@ -3,4 +3,7 @@ python-dotenv
 groq
 gspread 
 oauth2client
-
+altair
+seaborn
+xlsxwriter
+fpdf
