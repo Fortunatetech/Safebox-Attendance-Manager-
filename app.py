@@ -84,7 +84,7 @@ with col1:
     st.header("Sign-In")
     employee_id_in = st.text_input("Enter Employee ID")
     attendance_status1 = st.selectbox("Attendance Status (Sign-In)", ["Early", "Leave", "Holiday", 
-                                                                      "Work from Hoome", "Site Work", 
+                                                                      "Work from Home", "Site Work", 
                                                                       "Late(On Official Duty)", 
                                                                       "Tardy(Late Arrival)"])
 
