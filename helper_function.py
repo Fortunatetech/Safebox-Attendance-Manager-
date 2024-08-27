@@ -154,9 +154,11 @@ def detailed_reports(attendance_df):
         href = f'<a href="data:application/octet-stream;base64,{b64}" download="attendance_report.pdf">Download PDF Report</a>'
         st.markdown(href, unsafe_allow_html=True)
 
-# # Helper function to add a new employee
+# Helper function to add a new employee
 def add_employee(df, new_employee):
-    return df.append(new_employee, ignore_index=True)
+    # Convert the new employee dictionary to a DataFrame and concatenate it
+    new_employee_df = pd.DataFrame([new_employee])
+    return pd.concat([df, new_employee_df], ignore_index=True)
 
 # Helper function to remove an employee by ID
 def remove_employee(df, employee_id):
@@ -220,11 +222,11 @@ def employee_management():
     
             employee_data = edit_employee(employee_data, edit_id, updated_info)
             st.success(f"Updated Employee: {edit_id}")
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.warning("No employees found for the search criteria.")
 
-# # Add New Employee
+# Add New Employee
     st.subheader("Add New Employee")
     with st.form("add_employee_form"):
         new_employee_id = st.text_input("Employee ID")
@@ -238,7 +240,6 @@ def employee_management():
         new_supervisor_name = st.text_input("Supervisor Name")
         new_address = st.text_area("Address")
 
-        # Use form_submit_button instead of button inside a form
         if st.form_submit_button("Add Employee"):
             if not new_employee_id or not new_name:
                 st.error("Employee ID and Name are required fields.")
@@ -255,10 +256,10 @@ def employee_management():
                     'Supervisor Name': new_supervisor_name,
                     'Address': new_address
                 }
-                employee_df, _ = data_ingestion()
+        
                 employee_data = add_employee(employee_df, new_employee)
                 st.success(f"Added New Employee: {new_name}")
-                st.experimental_rerun()
+                st.rerun()
 
     # Remove Employee
     st.subheader("Remove Employee")
