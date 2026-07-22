@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+:root {
+  --background: #14181c;
+  --foreground: #edeff1;
+
+  /* Vault Console palette */
+  --color-graphite-950: #14181c;
+  --color-graphite-900: #191e23;
+  --color-graphite-800: #1e2429;
+  --color-graphite-700: #2a333a;
+  --color-graphite-600: #3b454e;
+  --color-graphite-500: #4c5760;
+
+  --color-ink-100: #edeff1;
+  --color-ink-300: #b7c0c7;
+  --color-ink-400: #8b98a3;
+  --color-ink-600: #5c6870;
+
+  --color-brass-300: #f0d9a8;
+  --color-brass-400: #e6b968;
+  --color-brass-500: #d9a441;
+  --color-brass-600: #b8862e;
+
+  --color-brick-400: #d47871;
+  --color-brick-500: #c2564f;
+  --color-brick-600: #a13f3a;
+
+  --color-moss-400: #8bb693;
+  --color-moss-500: #6b9b72;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-graphite-950: var(--color-graphite-950);
+  --color-graphite-900: var(--color-graphite-900);
+  --color-graphite-800: var(--color-graphite-800);
+  --color-graphite-700: var(--color-graphite-700);
+  --color-graphite-600: var(--color-graphite-600);
+  --color-graphite-500: var(--color-graphite-500);
+
+  --color-ink-100: var(--color-ink-100);
+  --color-ink-300: var(--color-ink-300);
+  --color-ink-400: var(--color-ink-400);
+  --color-ink-600: var(--color-ink-600);
+
+  --color-brass-300: var(--color-brass-300);
+  --color-brass-400: var(--color-brass-400);
+  --color-brass-500: var(--color-brass-500);
+  --color-brass-600: var(--color-brass-600);
+
+  --color-brick-400: var(--color-brick-400);
+  --color-brick-500: var(--color-brick-500);
+  --color-brick-600: var(--color-brick-600);
+
+  --color-moss-400: var(--color-moss-400);
+  --color-moss-500: var(--color-moss-500);
+
+  --font-display: var(--font-space-grotesk);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(217, 164, 65, 0.07), transparent),
+    linear-gradient(to bottom, var(--color-graphite-950), var(--color-graphite-950));
+  min-height: 100dvh;
+}
+
+::selection {
+  background: var(--color-brass-500);
+  color: var(--color-graphite-950);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brass-400);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes dial-engage {
+  0% { transform: rotate(0deg) scale(1); }
+  40% { transform: rotate(38deg) scale(1.05); }
+  100% { transform: rotate(38deg) scale(1); }
+}
+
+@keyframes glow-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0.55); }
+  70% { box-shadow: 0 0 0 14px rgba(217, 164, 65, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 164, 65, 0); }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 900ms ease-out;
+}
+
+.animate-dial-engage {
+  animation: dial-engage 480ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+dialog {
+  color: inherit;
+}
+
+dialog::backdrop {
+  background: rgba(8, 10, 12, 0.72);
+  backdrop-filter: blur(2px);
+}
