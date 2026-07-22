@@ -1,0 +1,13 @@
+# secrets
+.env
+.env.*
+credentials.json
+credentials2.json
+token.pickle
+
+# python
+__pycache__/
+*.pyc
+
+# node (the web/ subproject has its own .gitignore, but belt-and-suspenders)
+node_modules/
