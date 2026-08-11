@@ -70,7 +70,7 @@ export function AttendancePanel({
           <TextInput
             id={`employeeId-${mode}`}
             name="employeeId"
-            placeholder="sbx001"
+            placeholder="SBX-DT-2201-07"
             autoComplete="off"
             spellCheck={false}
             required

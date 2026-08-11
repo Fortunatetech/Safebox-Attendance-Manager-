@@ -1,13 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import {
-  EMPLOYEE_ID_PATTERN,
-  BREAK_START,
-  BREAK_END,
-} from "@/lib/sheets/types";
+import { BREAK_START, BREAK_END } from "@/lib/sheets/types";
 import { findEmployee, getAttendance, appendAttendance, recordSignOut } from "@/lib/sheets";
 import { checkGeofence } from "@/lib/geofence";
+import { normalizeEmployeeId } from "@/lib/employeeId";
 import type { ActionState } from "@/lib/actionState";
 
 /** Returns a user-facing error message if the reported position fails the office geofence, else null. */
@@ -37,12 +34,13 @@ function todayParts() {
 }
 
 export async function signInAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const employeeId = String(formData.get("employeeId") ?? "").trim().toLowerCase();
+  const raw = String(formData.get("employeeId") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!employeeId) return { status: "error", message: "Please enter an Employee ID." };
-  if (!EMPLOYEE_ID_PATTERN.test(employeeId)) {
-    return { status: "error", message: "ID format not supported. Please enter an ID in the format sbxXXX." };
+  if (!raw.trim()) return { status: "error", message: "Please enter an Employee ID." };
+  const employeeId = normalizeEmployeeId(raw);
+  if (!employeeId) {
+    return { status: "error", message: "ID format not supported. Please enter an ID in the format SBX-DT-2201-07." };
   }
 
   const geofenceMessage = geofenceError(formData);
@@ -80,12 +78,13 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
 }
 
 export async function signOutAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const employeeId = String(formData.get("employeeId") ?? "").trim().toLowerCase();
+  const raw = String(formData.get("employeeId") ?? "");
   const status = String(formData.get("status") ?? "");
 
-  if (!employeeId) return { status: "error", message: "Please enter an Employee ID." };
-  if (!EMPLOYEE_ID_PATTERN.test(employeeId)) {
-    return { status: "error", message: "ID format not supported. Please enter an ID in the format sbxXXX." };
+  if (!raw.trim()) return { status: "error", message: "Please enter an Employee ID." };
+  const employeeId = normalizeEmployeeId(raw);
+  if (!employeeId) {
+    return { status: "error", message: "ID format not supported. Please enter an ID in the format SBX-DT-2201-07." };
   }
 
   const geofenceMessage = geofenceError(formData);

@@ -56,18 +56,35 @@ export function EmployeeFormDialog({
         </h2>
 
         <form action={formAction} className="max-h-[70vh] space-y-4 overflow-y-auto pr-1">
-          <div>
-            <Label htmlFor={`${mode}-employeeId`}>Employee ID</Label>
-            <PlainInput
-              id={`${mode}-employeeId`}
-              name="employeeId"
-              defaultValue={e?.employeeId ?? ""}
-              placeholder="sbx001"
-              readOnly={mode === "edit"}
-              required
-              className={mode === "edit" ? "font-mono opacity-60" : "font-mono"}
-            />
-          </div>
+          {mode === "edit" ? (
+            <div>
+              <Label htmlFor="edit-employeeId">Employee ID</Label>
+              <PlainInput
+                id="edit-employeeId"
+                name="employeeId"
+                defaultValue={e?.employeeId ?? ""}
+                readOnly
+                required
+                className="font-mono opacity-60"
+              />
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="add-departmentCode">Department Code</Label>
+              <PlainInput
+                id="add-departmentCode"
+                name="departmentCode"
+                placeholder="DEV"
+                maxLength={4}
+                required
+                className="font-mono uppercase"
+              />
+              <p className="mt-1.5 text-xs text-ink-600">
+                2-4 letters (e.g. DT, HR, DEV, ENG). The Employee ID (SBX-DEPT-YYMM-NN) is generated
+                automatically from this, the joining date below, and the next company-wide sequence number.
+              </p>
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor={`${mode}-employeeName`}>Employee Name</Label>
@@ -90,20 +107,16 @@ export function EmployeeFormDialog({
               <PlainInput id={`${mode}-email`} name="email" type="email" defaultValue={e?.email ?? ""} />
             </div>
             <div>
-              <Label htmlFor={`${mode}-joiningDate`}>Joining Date</Label>
+              <Label htmlFor={`${mode}-joiningDate`}>Date of Hire</Label>
               <PlainInput id={`${mode}-joiningDate`} name="joiningDate" type="date" defaultValue={e?.joiningDate ?? ""} />
             </div>
             <div>
-              <Label htmlFor={`${mode}-shiftDays`}>Shift Days</Label>
-              <PlainInput id={`${mode}-shiftDays`} name="shiftDays" defaultValue={e?.shiftDays ?? ""} placeholder="Mon-Fri" />
-            </div>
-            <div>
-              <Label htmlFor={`${mode}-supervisorName`}>Supervisor Name</Label>
+              <Label htmlFor={`${mode}-supervisorName`}>Line Manager</Label>
               <PlainInput id={`${mode}-supervisorName`} name="supervisorName" defaultValue={e?.supervisorName ?? ""} />
             </div>
           </div>
           <div>
-            <Label htmlFor={`${mode}-address`}>Address</Label>
+            <Label htmlFor={`${mode}-address`}>Home Address</Label>
             <Textarea id={`${mode}-address`} name="address" rows={2} defaultValue={e?.address ?? ""} />
           </div>
 

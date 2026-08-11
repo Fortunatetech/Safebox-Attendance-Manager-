@@ -20,98 +20,98 @@ const pick = <T>(arr: readonly T[]) => arr[Math.floor(rand() * arr.length)];
 
 export const mockEmployees: Employee[] = [
   {
-    employeeId: "sbx001",
+    employeeId: "SBX-VT-2103-01",
     employeeName: "Adaeze Umeh",
     phoneNumber: "0803 214 7710",
     email: "adaeze.umeh@safebox.co",
     jobTitle: "Vault Custodian",
     department: "Vault Operations",
+    departmentCode: "VT",
     joiningDate: "2021-03-15",
-    shiftDays: "Mon-Fri",
     supervisorName: "Kelechi Obasi",
     address: "14 Marina Road, Lagos",
   },
   {
-    employeeId: "sbx002",
+    employeeId: "SBX-CL-2007-01",
     employeeName: "Tunde Bakare",
     phoneNumber: "0805 662 9981",
     email: "tunde.bakare@safebox.co",
     jobTitle: "Cash-in-Transit Officer",
     department: "Cash Logistics",
+    departmentCode: "CL",
     joiningDate: "2020-07-01",
-    shiftDays: "Mon-Sat",
     supervisorName: "Grace Ihenacho",
     address: "22 Allen Avenue, Ikeja",
   },
   {
-    employeeId: "sbx003",
+    employeeId: "SBX-CS-2201-01",
     employeeName: "Ifeoma Chukwu",
     phoneNumber: "0701 338 2204",
     email: "ifeoma.chukwu@safebox.co",
     jobTitle: "Client Services Lead",
     department: "Client Services",
+    departmentCode: "CS",
     joiningDate: "2022-01-10",
-    shiftDays: "Mon-Fri",
     supervisorName: "Grace Ihenacho",
     address: "5 Awolowo Way, Ikoyi",
   },
   {
-    employeeId: "sbx004",
+    employeeId: "SBX-IT-1911-01",
     employeeName: "Segun Adewale",
     phoneNumber: "0906 447 1123",
     email: "segun.adewale@safebox.co",
     jobTitle: "Security Systems Engineer",
     department: "IT & Security Systems",
+    departmentCode: "IT",
     joiningDate: "2019-11-20",
-    shiftDays: "Mon-Fri",
     supervisorName: "Kelechi Obasi",
     address: "9 Herbert Macaulay Way, Yaba",
   },
   {
-    employeeId: "sbx005",
+    employeeId: "SBX-FC-2302-01",
     employeeName: "Ngozi Eze",
     phoneNumber: "0812 990 3345",
     email: "ngozi.eze@safebox.co",
     jobTitle: "Facilities Coordinator",
     department: "Facilities",
+    departmentCode: "FC",
     joiningDate: "2023-02-06",
-    shiftDays: "Mon-Fri",
     supervisorName: "Grace Ihenacho",
     address: "3 Adeola Odeku Street, VI",
   },
   {
-    employeeId: "sbx006",
+    employeeId: "SBX-VT-2109-01",
     employeeName: "Chidi Obi",
     phoneNumber: "0803 771 6650",
     email: "chidi.obi@safebox.co",
     jobTitle: "Vault Custodian",
     department: "Vault Operations",
+    departmentCode: "VT",
     joiningDate: "2021-09-12",
-    shiftDays: "Mon-Fri",
     supervisorName: "Kelechi Obasi",
     address: "17 Opebi Road, Ikeja",
   },
   {
-    employeeId: "sbx007",
+    employeeId: "SBX-CL-2205-01",
     employeeName: "Blessing Okoro",
     phoneNumber: "0708 224 5567",
     email: "blessing.okoro@safebox.co",
     jobTitle: "Cash-in-Transit Officer",
     department: "Cash Logistics",
+    departmentCode: "CL",
     joiningDate: "2022-05-30",
-    shiftDays: "Mon-Sat",
     supervisorName: "Grace Ihenacho",
     address: "40 Bode Thomas Street, Surulere",
   },
   {
-    employeeId: "sbx008",
+    employeeId: "SBX-CS-2308-01",
     employeeName: "Emeka Nwosu",
     phoneNumber: "0813 556 8802",
     email: "emeka.nwosu@safebox.co",
     jobTitle: "Client Services Officer",
     department: "Client Services",
+    departmentCode: "CS",
     joiningDate: "2023-08-01",
-    shiftDays: "Mon-Fri",
     supervisorName: "Ifeoma Chukwu",
     address: "61 Ozumba Mbadiwe, VI",
   },
@@ -141,7 +141,7 @@ function buildHistory(): AttendanceRecord[] {
     if (d.getDay() === 0) continue; // skip Sunday
 
     for (const emp of mockEmployees) {
-      if (d.getDay() === 6 && emp.shiftDays !== "Mon-Sat") continue;
+      if (d.getDay() === 6 && emp.department !== "Cash Logistics") continue;
 
       const roll = rand();
       let statusIn: string = "Early";
@@ -195,7 +195,7 @@ function buildHistory(): AttendanceRecord[] {
   const todayName = dayName(today);
 
   records.push({
-    employeeId: "sbx002",
+    employeeId: "SBX-CL-2007-01",
     employeeName: "Tunde Bakare",
     department: "Cash Logistics",
     date: todayStr,
@@ -209,7 +209,7 @@ function buildHistory(): AttendanceRecord[] {
   });
 
   records.push({
-    employeeId: "sbx003",
+    employeeId: "SBX-CS-2201-01",
     employeeName: "Ifeoma Chukwu",
     department: "Client Services",
     date: todayStr,
@@ -223,7 +223,7 @@ function buildHistory(): AttendanceRecord[] {
   });
 
   records.push({
-    employeeId: "sbx005",
+    employeeId: "SBX-FC-2302-01",
     employeeName: "Ngozi Eze",
     department: "Facilities",
     date: todayStr,
@@ -237,7 +237,7 @@ function buildHistory(): AttendanceRecord[] {
   });
 
   records.push({
-    employeeId: "sbx008",
+    employeeId: "SBX-CS-2308-01",
     employeeName: "Emeka Nwosu",
     department: "Client Services",
     date: todayStr,

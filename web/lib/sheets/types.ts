@@ -1,12 +1,12 @@
 export interface Employee {
   employeeId: string;
   employeeName: string;
+  department: string;
+  departmentCode: string;
+  jobTitle: string;
   phoneNumber: string;
   email: string;
-  jobTitle: string;
-  department: string;
   joiningDate: string;
-  shiftDays: string;
   supervisorName: string;
   address: string;
 }
@@ -25,90 +25,56 @@ export interface AttendanceRecord {
   attendanceStatusOut: string;
 }
 
-/** Sheet header names, in the order the original app used them. Reads are header-driven (order-independent); writes emit rows in this order. */
-export const EMPLOYEE_HEADERS = [
-  "Employee ID",
-  "Employee Name",
-  "Phone Number",
-  "E-mail Address",
-  "Job Title",
-  "Department",
-  "Joining Date",
-  "Shift Days",
-  "Supervisor Name",
-  "Address",
-] as const;
-
-export const ATTENDANCE_HEADERS = [
-  "Employee ID",
-  "Employee Name",
-  "Department",
-  "Date",
-  "Day",
-  "In-Time",
-  "Attendance Status In",
-  "Break Start",
-  "Break End",
-  "Out-Time",
-  "Attendance Status Out",
-] as const;
-
 export const EMPLOYEE_SHEET_TITLE = "Employee Master Data";
 export const ATTENDANCE_SHEET_TITLE = "Attendance Data";
 
-export const employeeToRow = (e: Partial<Employee>): string[] => [
-  e.employeeId ?? "",
-  e.employeeName ?? "",
-  e.phoneNumber ?? "",
-  e.email ?? "",
-  e.jobTitle ?? "",
-  e.department ?? "",
-  e.joiningDate ?? "",
-  e.shiftDays ?? "",
-  e.supervisorName ?? "",
-  e.address ?? "",
-];
+/**
+ * Maps each Employee field to the exact header text in the real sheet (the sheet has
+ * many more HR columns than this app manages — Entity, Employment Type, Probation
+ * dates, Bank, guarantor attachments, etc. — those are left untouched on every
+ * read/write; only the fields listed here are ever read from or written to).
+ * Matches the real header text exactly, including its "Adress" typo.
+ */
+export const EMPLOYEE_FIELD_HEADERS: Record<keyof Employee, string> = {
+  employeeId: "Employee ID",
+  employeeName: "Full Name",
+  department: "Department",
+  departmentCode: "Departmental Code",
+  jobTitle: "Job Title",
+  phoneNumber: "Phone Number",
+  email: "Email Adress",
+  joiningDate: "Date of Hire",
+  supervisorName: "Line Manager",
+  address: "Home Address",
+};
 
-export const rowToEmployee = (row: Record<string, string>): Employee => ({
-  employeeId: row["Employee ID"] ?? "",
-  employeeName: row["Employee Name"] ?? "",
-  phoneNumber: row["Phone Number"] ?? "",
-  email: row["E-mail Address"] ?? "",
-  jobTitle: row["Job Title"] ?? "",
-  department: row["Department"] ?? "",
-  joiningDate: row["Joining Date"] ?? "",
-  shiftDays: row["Shift Days"] ?? "",
-  supervisorName: row["Supervisor Name"] ?? "",
-  address: row["Address"] ?? "",
-});
+export const ATTENDANCE_FIELD_HEADERS: Record<keyof AttendanceRecord, string> = {
+  employeeId: "Employee ID",
+  employeeName: "Employee Name",
+  department: "Department",
+  date: "Date",
+  day: "Day",
+  inTime: "In-Time",
+  attendanceStatusIn: "Attendance Status In",
+  breakStart: "Break Start",
+  breakEnd: "Break End",
+  outTime: "Out-Time",
+  attendanceStatusOut: "Attendance Status Out",
+};
 
-export const attendanceToRow = (a: Partial<AttendanceRecord>): string[] => [
-  a.employeeId ?? "",
-  a.employeeName ?? "",
-  a.department ?? "",
-  a.date ?? "",
-  a.day ?? "",
-  a.inTime ?? "",
-  a.attendanceStatusIn ?? "",
-  a.breakStart ?? "",
-  a.breakEnd ?? "",
-  a.outTime ?? "",
-  a.attendanceStatusOut ?? "",
-];
+function rowFromFieldHeaders<T>(fieldHeaders: Record<keyof T, string>, row: Record<string, string>): T {
+  const result = {} as T;
+  for (const key of Object.keys(fieldHeaders) as (keyof T)[]) {
+    result[key] = (row[fieldHeaders[key]] ?? "") as T[keyof T];
+  }
+  return result;
+}
 
-export const rowToAttendance = (row: Record<string, string>): AttendanceRecord => ({
-  employeeId: row["Employee ID"] ?? "",
-  employeeName: row["Employee Name"] ?? "",
-  department: row["Department"] ?? "",
-  date: row["Date"] ?? "",
-  day: row["Day"] ?? "",
-  inTime: row["In-Time"] ?? "",
-  attendanceStatusIn: row["Attendance Status In"] ?? "",
-  breakStart: row["Break Start"] ?? "",
-  breakEnd: row["Break End"] ?? "",
-  outTime: row["Out-Time"] ?? "",
-  attendanceStatusOut: row["Attendance Status Out"] ?? "",
-});
+export const rowToEmployee = (row: Record<string, string>): Employee =>
+  rowFromFieldHeaders(EMPLOYEE_FIELD_HEADERS, row);
+
+export const rowToAttendance = (row: Record<string, string>): AttendanceRecord =>
+  rowFromFieldHeaders(ATTENDANCE_FIELD_HEADERS, row);
 
 export const SIGN_IN_STATUSES = [
   "Early",
@@ -128,5 +94,3 @@ export const SIGN_OUT_STATUSES = [
 
 export const BREAK_START = "12:00 PM";
 export const BREAK_END = "12:40 PM";
-
-export const EMPLOYEE_ID_PATTERN = /^sbx\d{3}$/;

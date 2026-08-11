@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 // One-time setup: creates the "Employee Master Data" and "Attendance Data" tabs
-// (with header rows) in an empty Google Sheet, using the same service account
-// credentials the app itself reads from .env.local.
+// (with header rows) in a BRAND NEW, EMPTY Google Sheet, using the same service
+// account credentials the app itself reads from .env.local.
+//
+// Refuses to touch a tab that already has a header row, so it's safe to re-run
+// and can't clobber a sheet someone has already started populating.
+//
 // Usage: node scripts/setup-sheet.mjs
 import { readFileSync, existsSync } from "node:fs";
 import { google } from "googleapis";
@@ -24,9 +28,13 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
+// Only the columns this app actually reads/writes (see lib/sheets/types.ts
+// EMPLOYEE_FIELD_HEADERS / ATTENDANCE_FIELD_HEADERS). A real HR sheet may have
+// more columns than this — that's fine, the app ignores anything it doesn't
+// recognize by header name.
 const EMPLOYEE_HEADERS = [
-  "Employee ID", "Employee Name", "Phone Number", "E-mail Address", "Job Title",
-  "Department", "Joining Date", "Shift Days", "Supervisor Name", "Address",
+  "Employee ID", "Full Name", "Department", "Departmental Code", "Job Title",
+  "Phone Number", "Email Adress", "Date of Hire", "Line Manager", "Home Address",
 ];
 const ATTENDANCE_HEADERS = [
   "Employee ID", "Employee Name", "Department", "Date", "Day", "In-Time",
@@ -59,19 +67,23 @@ async function main() {
     console.log(`Created tab(s): ${addRequests.map((r) => r.addSheet.properties.title).join(", ")}`);
   }
 
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: "'Employee Master Data'!A1",
-    valueInputOption: "RAW",
-    requestBody: { values: [EMPLOYEE_HEADERS] },
-  });
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range: "'Attendance Data'!A1",
-    valueInputOption: "RAW",
-    requestBody: { values: [ATTENDANCE_HEADERS] },
-  });
-  console.log("Header rows written to both tabs.");
+  for (const [title, headers] of [
+    ["Employee Master Data", EMPLOYEE_HEADERS],
+    ["Attendance Data", ATTENDANCE_HEADERS],
+  ]) {
+    const existing = await sheets.spreadsheets.values.get({ spreadsheetId, range: `'${title}'!A1:A1` });
+    if (existing.data.values && existing.data.values.length > 0) {
+      console.log(`Skipped "${title}" — it already has a header row (refusing to overwrite existing data).`);
+      continue;
+    }
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `'${title}'!A1`,
+      valueInputOption: "RAW",
+      requestBody: { values: [headers] },
+    });
+    console.log(`Header row written to "${title}".`);
+  }
 
   const sheet1 = meta.data.sheets.find((s) => s.properties.title === "Sheet1");
   if (sheet1) {

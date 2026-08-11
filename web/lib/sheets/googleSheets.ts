@@ -74,7 +74,7 @@ export async function readTable(sheetTitle: string): Promise<SheetTable> {
   return { headers, rows, rowNumbers };
 }
 
-export async function appendRow(sheetTitle: string, headers: readonly string[], row: string[]) {
+export async function appendRow(sheetTitle: string, row: string[]) {
   const sheets = getSheetsClient();
   const spreadsheetId = getSpreadsheetId();
   await sheets.spreadsheets.values.append({
@@ -84,6 +84,16 @@ export async function appendRow(sheetTitle: string, headers: readonly string[], 
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [row] },
   });
+}
+
+/**
+ * Builds a positional row array aligned to the sheet's *actual* live header order,
+ * placing `data[headerText]` at the matching column and "" for every column this
+ * app doesn't know about. Never assume a fixed column order when writing — the
+ * live header row is the only source of truth.
+ */
+export function buildRowForHeaders(headers: string[], data: Record<string, string>): string[] {
+  return headers.map((h) => data[h] ?? "");
 }
 
 /** Updates specific header-named cells in a given (1-indexed) sheet row. */

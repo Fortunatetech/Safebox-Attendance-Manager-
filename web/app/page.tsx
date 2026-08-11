@@ -44,8 +44,9 @@ export default function KioskPage() {
           <div>
             <p className="mb-1.5 font-medium text-ink-300">Signing in</p>
             <p>
-              Enter your Employee ID in the <code className="font-mono text-brass-300">sbxXXX</code> format,
-              choose your attendance status, and submit. You can only sign in once per day.
+              Enter your Employee ID (e.g. <code className="font-mono text-brass-300">SBX-DT-2201-07</code>),
+              choose your attendance status, and submit. Dashes and letter case don&apos;t matter. You can
+              only sign in once per day.
             </p>
           </div>
           <div>
