@@ -7,7 +7,25 @@ import {
   BREAK_END,
 } from "@/lib/sheets/types";
 import { findEmployee, getAttendance, appendAttendance, recordSignOut } from "@/lib/sheets";
+import { checkGeofence } from "@/lib/geofence";
 import type { ActionState } from "@/lib/actionState";
+
+/** Returns a user-facing error message if the reported position fails the office geofence, else null. */
+function geofenceError(formData: FormData): string | null {
+  const latRaw = formData.get("latitude");
+  const lngRaw = formData.get("longitude");
+  const lat = latRaw ? Number(latRaw) : null;
+  const lng = lngRaw ? Number(lngRaw) : null;
+
+  const result = checkGeofence(lat, lng);
+  if (result.status === "missing-location") {
+    return "Location access is required to sign in at this terminal. Please allow location permissions and try again.";
+  }
+  if (result.status === "out-of-range") {
+    return `You need to be at the office to do this (you're about ${Math.round(result.distanceMeters)}m away).`;
+  }
+  return null;
+}
 
 function todayParts() {
   const now = new Date();
@@ -26,6 +44,9 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
   if (!EMPLOYEE_ID_PATTERN.test(employeeId)) {
     return { status: "error", message: "ID format not supported. Please enter an ID in the format sbxXXX." };
   }
+
+  const geofenceMessage = geofenceError(formData);
+  if (geofenceMessage) return { status: "error", message: geofenceMessage };
 
   const employee = await findEmployee(employeeId);
   if (!employee) {
@@ -66,6 +87,9 @@ export async function signOutAction(_prev: ActionState, formData: FormData): Pro
   if (!EMPLOYEE_ID_PATTERN.test(employeeId)) {
     return { status: "error", message: "ID format not supported. Please enter an ID in the format sbxXXX." };
   }
+
+  const geofenceMessage = geofenceError(formData);
+  if (geofenceMessage) return { status: "error", message: geofenceMessage };
 
   const employee = await findEmployee(employeeId);
   if (!employee) {

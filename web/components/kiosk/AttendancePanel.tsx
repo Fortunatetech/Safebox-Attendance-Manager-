@@ -1,21 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Label, TextInput, SelectInput } from "@/components/ui/Field";
 import { VaultDial } from "@/components/ui/VaultDial";
 import type { ActionState } from "@/lib/actionState";
 import { initialActionState } from "@/lib/actionState";
-
-function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? pendingLabel : label}
-    </Button>
-  );
-}
 
 export function AttendancePanel({
   mode,
@@ -26,15 +16,44 @@ export function AttendancePanel({
   action: (prev: ActionState, formData: FormData) => Promise<ActionState>;
   statuses: readonly string[];
 }) {
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction, isPending] = useActionState(action, initialActionState);
+  const [isTransitioning, startTransition] = useTransition();
+  const [locating, setLocating] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const isIn = mode === "in";
+  const pending = isPending || isTransitioning || locating;
 
   useEffect(() => {
     if (state.status === "success") {
       formRef.current?.reset();
     }
   }, [state]);
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+
+    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          formData.set("latitude", String(pos.coords.latitude));
+          formData.set("longitude", String(pos.coords.longitude));
+          setLocating(false);
+          startTransition(() => formAction(formData));
+        },
+        () => {
+          // Permission denied or unavailable — submit without a position;
+          // the server decides whether a location was actually required.
+          setLocating(false);
+          startTransition(() => formAction(formData));
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
+      startTransition(() => formAction(formData));
+    }
+  }
 
   return (
     <div className="flex-1 p-6 sm:p-8">
@@ -45,7 +64,7 @@ export function AttendancePanel({
         </h2>
       </div>
 
-      <form ref={formRef} action={formAction} className="space-y-5">
+      <form ref={formRef} onSubmit={handleSubmit} className="space-y-5">
         <div>
           <Label htmlFor={`employeeId-${mode}`}>Employee ID</Label>
           <TextInput
@@ -68,10 +87,9 @@ export function AttendancePanel({
           </SelectInput>
         </div>
 
-        <SubmitButton
-          label={isIn ? "Engage sign-in" : "Release sign-out"}
-          pendingLabel="Verifying…"
-        />
+        <Button type="submit" disabled={pending} className="w-full">
+          {locating ? "Locating…" : pending ? "Verifying…" : isIn ? "Engage sign-in" : "Release sign-out"}
+        </Button>
 
         <div
           role="status"

@@ -4,8 +4,9 @@
     {
       "name": "safebox-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "web"],
-      "port": 3000
+      "runtimeArgs": ["run", "dev", "--prefix", "web", "--", "-p", "3100"],
+      "port": 3100,
+      "autoPort": false
     }
   ]
 }

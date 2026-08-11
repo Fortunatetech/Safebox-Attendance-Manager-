@@ -3,8 +3,10 @@ import { VaultDial } from "@/components/ui/VaultDial";
 import { AttendancePanel } from "@/components/kiosk/AttendancePanel";
 import { signInAction, signOutAction } from "@/app/actions/attendance";
 import { SIGN_IN_STATUSES, SIGN_OUT_STATUSES } from "@/lib/sheets/types";
+import { isGeofenceConfigured } from "@/lib/geofence";
 
 export default function KioskPage() {
+  const geofenced = isGeofenceConfigured();
   const today = new Date();
   const dateLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
@@ -53,6 +55,16 @@ export default function KioskPage() {
               you&apos;ve signed in for the day.
             </p>
           </div>
+          {geofenced && (
+            <div className="sm:col-span-2">
+              <p className="mb-1.5 font-medium text-ink-300">Location access</p>
+              <p>
+                This terminal checks that you&apos;re physically at the office before recording your
+                attendance. Your browser will ask for location permission — allow it, or sign-in/out will
+                be blocked.
+              </p>
+            </div>
+          )}
         </div>
       </details>
 

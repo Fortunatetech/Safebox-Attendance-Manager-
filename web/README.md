@@ -64,6 +64,31 @@ column order doesn't need to change.
 
 Once all three are set, the app reads/writes the live sheet instead of mock data — no code changes needed.
 
+## Office geofencing (optional)
+
+To require staff to be physically at the office to sign in/out (blocks signing in from home or in
+transit), set `OFFICE_LAT` and `OFFICE_LNG` in `.env.local` / Vercel env vars. The kiosk then asks the
+browser for the device's GPS position on every sign-in/out and rejects the request server-side if it's
+further than `OFFICE_RADIUS_METERS` (default 150m) from that point.
+
+1. Get your office's coordinates (e.g. right-click the location in Google Maps → copy the lat/lng shown).
+2. Set:
+   ```
+   OFFICE_LAT=6.5244
+   OFFICE_LNG=3.3792
+   OFFICE_RADIUS_METERS=150
+   ```
+3. Leave both blank to disable the check entirely — this is the default, so local dev and any deployment
+   that hasn't opted in are unaffected.
+
+Notes:
+- This checks the device's **reported GPS location**, not the network it's connected to — it works over
+  Wi-Fi or cellular data, and doesn't depend on your office ISP's IP address staying stable (Starlink in
+  particular rotates IPs via CGNAT on most plans, which makes IP-based restriction unreliable).
+- Employees will get a one-time browser location-permission prompt. If they deny it, sign-in/out is
+  blocked with a clear message rather than silently failing.
+- GPS accuracy indoors can drift 20–50m, so avoid setting the radius too tight.
+
 ## Deploying to Vercel
 
 1. Push this repo to GitHub.
