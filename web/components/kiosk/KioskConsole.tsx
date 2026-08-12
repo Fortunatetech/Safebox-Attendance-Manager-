@@ -42,10 +42,11 @@ export function KioskConsole() {
     const formData = new FormData();
     formData.set("employeeId", employeeId);
 
-    const proceed = (lat?: number, lng?: number) => {
+    const proceed = (lat?: number, lng?: number, accuracy?: number) => {
       if (lat != null && lng != null) {
         formData.set("latitude", String(lat));
         formData.set("longitude", String(lng));
+        if (accuracy != null) formData.set("accuracy", String(accuracy));
       }
       startTransition(async () => {
         const action = mode === "in" ? signInAction : signOutAction;
@@ -60,9 +61,9 @@ export function KioskConsole() {
     if (typeof navigator !== "undefined" && "geolocation" in navigator) {
       setLocating(true);
       navigator.geolocation.getCurrentPosition(
-        (pos) => proceed(pos.coords.latitude, pos.coords.longitude),
+        (pos) => proceed(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
         () => proceed(),
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
       );
     } else {
       proceed();

@@ -11,12 +11,17 @@ import type { ActionState } from "@/lib/actionState";
 function geofenceError(formData: FormData): string | null {
   const latRaw = formData.get("latitude");
   const lngRaw = formData.get("longitude");
+  const accRaw = formData.get("accuracy");
   const lat = latRaw ? Number(latRaw) : null;
   const lng = lngRaw ? Number(lngRaw) : null;
+  const accuracy = accRaw ? Number(accRaw) : null;
 
-  const result = checkGeofence(lat, lng);
+  const result = checkGeofence(lat, lng, accuracy);
   if (result.status === "missing-location") {
     return "Location access is required to sign in at this terminal. Please allow location permissions and try again.";
+  }
+  if (result.status === "low-accuracy") {
+    return `Your device's location isn't precise enough right now (accuracy ~${Math.round(result.accuracyMeters)}m). Step outside or near a window and try again.`;
   }
   if (result.status === "out-of-range") {
     return `You need to be at the office to do this (you're about ${Math.round(result.distanceMeters)}m away).`;

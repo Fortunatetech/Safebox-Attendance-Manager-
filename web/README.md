@@ -88,6 +88,10 @@ Notes:
 - Employees will get a one-time browser location-permission prompt. If they deny it, sign-in/out is
   blocked with a clear message rather than silently failing.
 - GPS accuracy indoors can drift 20–50m, so avoid setting the radius too tight.
+- Phones sometimes return a fast, low-accuracy network-based fix instead of waiting for a real GPS lock —
+  that alone could misread as "in range" from well outside the office. `OFFICE_MAX_ACCURACY_METERS`
+  (default 100) rejects any fix worse than that and asks the user to retry, so a distance check never runs
+  against a position that can't be trusted in the first place.
 
 ## Deploying to Vercel
 
