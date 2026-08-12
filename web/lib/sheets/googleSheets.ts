@@ -80,7 +80,10 @@ export async function appendRow(sheetTitle: string, row: string[]) {
   await sheets.spreadsheets.values.append({
     spreadsheetId,
     range: `'${sheetTitle}'!A1`,
-    valueInputOption: "USER_ENTERED",
+    // RAW, not USER_ENTERED: we always send fully-formatted display strings
+    // ("2026-08-11", "10:50 AM") and never want Sheets reinterpreting them as
+    // dates/times/numbers, which silently turns them into unreadable serials.
+    valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [row] },
   });
@@ -115,7 +118,7 @@ export async function updateRowCells(
   });
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
-    requestBody: { valueInputOption: "USER_ENTERED", data },
+    requestBody: { valueInputOption: "RAW", data },
   });
 }
 
@@ -129,7 +132,7 @@ export async function overwriteRow(
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: `'${sheetTitle}'!A${rowNumber}`,
-    valueInputOption: "USER_ENTERED",
+    valueInputOption: "RAW",
     requestBody: { values: [row] },
   });
 }

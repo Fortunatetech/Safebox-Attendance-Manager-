@@ -35,7 +35,6 @@ function todayParts() {
 
 export async function signInAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const raw = String(formData.get("employeeId") ?? "");
-  const status = String(formData.get("status") ?? "");
 
   if (!raw.trim()) return { status: "error", message: "Please enter an Employee ID." };
   const employeeId = normalizeEmployeeId(raw);
@@ -65,7 +64,7 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
     date,
     day,
     inTime: time,
-    attendanceStatusIn: status,
+    attendanceStatusIn: "",
     breakStart: BREAK_START,
     breakEnd: BREAK_END,
     outTime: "",
@@ -74,12 +73,11 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
 
   revalidatePath("/");
   revalidatePath("/admin");
-  return { status: "success", message: `Signed in — welcome, ${employee.employeeName}.` };
+  return { status: "success", message: `Signed in at ${time} — welcome, ${employee.employeeName}.` };
 }
 
 export async function signOutAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const raw = String(formData.get("employeeId") ?? "");
-  const status = String(formData.get("status") ?? "");
 
   if (!raw.trim()) return { status: "error", message: "Please enter an Employee ID." };
   const employeeId = normalizeEmployeeId(raw);
@@ -104,12 +102,12 @@ export async function signOutAction(_prev: ActionState, formData: FormData): Pro
     return { status: "error", message: "You have already signed out today." };
   }
 
-  const found = await recordSignOut(employeeId, date, time, status);
+  const found = await recordSignOut(employeeId, date, time, "");
   if (!found) {
-    return { status: "error", message: "No open sign-in record found for today." };
+    return { status: "error", message: "No sign-in record found for today. You need to sign in before you can sign out." };
   }
 
   revalidatePath("/");
   revalidatePath("/admin");
-  return { status: "success", message: `Signed out — see you tomorrow, ${employee.employeeName}.` };
+  return { status: "success", message: `Signed out at ${time} — see you tomorrow, ${employee.employeeName}.` };
 }
