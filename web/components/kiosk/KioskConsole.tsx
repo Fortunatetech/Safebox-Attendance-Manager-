@@ -9,6 +9,47 @@ type Mode = "in" | "out";
 
 const EMPTY_ID_ERROR: ActionState = { status: "error", message: "Please enter your Employee ID." };
 
+/**
+ * A single getCurrentPosition() call often returns whatever fix the OS already had
+ * cached (e.g. a WiFi-based position from when the phone was last on office WiFi),
+ * even with maximumAge: 0 — browsers treat that as a hint, not a guarantee. Watching
+ * for a few seconds gives a real GPS lock time to come in and supersede it; we keep
+ * whichever reading reports the best (lowest) accuracy, and stop early once that's
+ * good enough rather than always waiting out the full window.
+ */
+function getBestPosition(windowMs = 6000, goodEnoughAccuracy = 25): Promise<GeolocationPosition | null> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      resolve(null);
+      return;
+    }
+
+    let best: GeolocationPosition | null = null;
+    let watchId: number | null = null;
+
+    const finish = () => {
+      if (watchId != null) navigator.geolocation.clearWatch(watchId);
+      resolve(best);
+    };
+    const timer = setTimeout(finish, windowMs);
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
+        if (pos.coords.accuracy <= goodEnoughAccuracy) {
+          clearTimeout(timer);
+          finish();
+        }
+      },
+      () => {
+        clearTimeout(timer);
+        finish();
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: windowMs }
+    );
+  });
+}
+
 export function KioskConsole() {
   const [employeeId, setEmployeeId] = useState("");
   const [isPending, startTransition] = useTransition();
@@ -31,7 +72,7 @@ export function KioskConsole() {
     }
   }, [result]);
 
-  function runAction(mode: Mode) {
+  async function runAction(mode: Mode) {
     if (busy) return;
     if (!employeeId.trim()) {
       setResult(EMPTY_ID_ERROR);
@@ -42,32 +83,22 @@ export function KioskConsole() {
     const formData = new FormData();
     formData.set("employeeId", employeeId);
 
-    const proceed = (lat?: number, lng?: number, accuracy?: number) => {
-      if (lat != null && lng != null) {
-        formData.set("latitude", String(lat));
-        formData.set("longitude", String(lng));
-        if (accuracy != null) formData.set("accuracy", String(accuracy));
-      }
-      startTransition(async () => {
-        const action = mode === "in" ? signInAction : signOutAction;
-        const res = await action({ status: "idle", message: "" }, formData);
-        setBusyMode(null);
-        setLocating(false);
-        setResult(res);
-        if (res.status === "success") setEmployeeId("");
-      });
-    };
-
-    if (typeof navigator !== "undefined" && "geolocation" in navigator) {
-      setLocating(true);
-      navigator.geolocation.getCurrentPosition(
-        (pos) => proceed(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy),
-        () => proceed(),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
-      );
-    } else {
-      proceed();
+    setLocating(true);
+    const pos = await getBestPosition();
+    setLocating(false);
+    if (pos) {
+      formData.set("latitude", String(pos.coords.latitude));
+      formData.set("longitude", String(pos.coords.longitude));
+      formData.set("accuracy", String(pos.coords.accuracy));
     }
+
+    startTransition(async () => {
+      const action = mode === "in" ? signInAction : signOutAction;
+      const res = await action({ status: "idle", message: "" }, formData);
+      setBusyMode(null);
+      setResult(res);
+      if (res.status === "success") setEmployeeId("");
+    });
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
