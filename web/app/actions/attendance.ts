@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { BREAK_START, BREAK_END } from "@/lib/sheets/types";
 import { findEmployee, getAttendance, appendAttendance, recordSignOut } from "@/lib/sheets";
-import { checkGeofence } from "@/lib/geofence";
+import { checkGeofence, isGeofenceConfigured } from "@/lib/geofence";
 import { normalizeEmployeeId } from "@/lib/employeeId";
 import type { ActionState } from "@/lib/actionState";
 
@@ -17,6 +17,17 @@ function geofenceError(formData: FormData): string | null {
   const accuracy = accRaw ? Number(accRaw) : null;
 
   const result = checkGeofence(lat, lng, accuracy);
+  console.log("[geofence-debug]", {
+    configured: isGeofenceConfigured(),
+    officeLat: process.env.OFFICE_LAT,
+    officeLng: process.env.OFFICE_LNG,
+    radius: process.env.OFFICE_RADIUS_METERS,
+    maxAccuracy: process.env.OFFICE_MAX_ACCURACY_METERS,
+    receivedLat: lat,
+    receivedLng: lng,
+    receivedAccuracy: accuracy,
+    result,
+  });
   if (result.status === "missing-location") {
     return "Location access is required to sign in at this terminal. Please allow location permissions and try again.";
   }
