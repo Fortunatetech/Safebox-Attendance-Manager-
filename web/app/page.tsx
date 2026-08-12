@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { VaultDial } from "@/components/ui/VaultDial";
 import { KioskConsole } from "@/components/kiosk/KioskConsole";
-import { isGeofenceConfigured } from "@/lib/geofence";
+import { isGateConfigured } from "@/lib/gate";
 
 export default function KioskPage() {
-  const geofenced = isGeofenceConfigured();
+  const gated = isGateConfigured();
   const today = new Date();
   const dateLabel = today.toLocaleDateString("en-US", {
     weekday: "long",
@@ -42,10 +42,10 @@ export default function KioskPage() {
           <p>
             You can only sign in once per day, and you can&apos;t sign out until you&apos;ve signed in.
           </p>
-          {geofenced && (
+          {gated && (
             <p>
-              This terminal also checks that you&apos;re physically at the office. Your browser will ask for
-              location permission — allow it, or sign-in/out will be blocked.
+              After you tap Sign In or Sign Out, your camera will open — point it at the QR code posted at
+              the gate to confirm you&apos;re physically there.
             </p>
           )}
         </div>

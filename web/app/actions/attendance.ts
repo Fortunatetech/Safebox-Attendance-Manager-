@@ -3,39 +3,16 @@
 import { revalidatePath } from "next/cache";
 import { BREAK_START, BREAK_END } from "@/lib/sheets/types";
 import { findEmployee, getAttendance, appendAttendance, recordSignOut } from "@/lib/sheets";
-import { checkGeofence, isGeofenceConfigured } from "@/lib/geofence";
+import { verifyGateScan } from "@/lib/gate";
 import { normalizeEmployeeId } from "@/lib/employeeId";
 import type { ActionState } from "@/lib/actionState";
 
-/** Returns a user-facing error message if the reported position fails the office geofence, else null. */
-function geofenceError(formData: FormData): string | null {
-  const latRaw = formData.get("latitude");
-  const lngRaw = formData.get("longitude");
-  const accRaw = formData.get("accuracy");
-  const lat = latRaw ? Number(latRaw) : null;
-  const lng = lngRaw ? Number(lngRaw) : null;
-  const accuracy = accRaw ? Number(accRaw) : null;
-
-  const result = checkGeofence(lat, lng, accuracy);
-  console.log("[geofence-debug]", {
-    configured: isGeofenceConfigured(),
-    officeLat: process.env.OFFICE_LAT,
-    officeLng: process.env.OFFICE_LNG,
-    radius: process.env.OFFICE_RADIUS_METERS,
-    maxAccuracy: process.env.OFFICE_MAX_ACCURACY_METERS,
-    receivedLat: lat,
-    receivedLng: lng,
-    receivedAccuracy: accuracy,
-    result,
-  });
-  if (result.status === "missing-location") {
-    return "Location access is required to sign in at this terminal. Please allow location permissions and try again.";
-  }
-  if (result.status === "low-accuracy") {
-    return `Your device's location isn't precise enough right now (accuracy ~${Math.round(result.accuracyMeters)}m). Step outside or near a window and try again.`;
-  }
-  if (result.status === "out-of-range") {
-    return `You need to be at the office to do this (you're about ${Math.round(result.distanceMeters)}m away).`;
+/** Returns a user-facing error message if the required gate-QR scan is missing or wrong, else null. */
+function gateError(formData: FormData): string | null {
+  const scanned = formData.get("gateCode");
+  const ok = verifyGateScan(typeof scanned === "string" ? scanned : null);
+  if (!ok) {
+    return "That QR code doesn't match the office gate code. Please scan the code posted at the gate and try again.";
   }
   return null;
 }
@@ -58,8 +35,8 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
     return { status: "error", message: "ID format not supported. Please enter an ID in the format SBX-DT-2201-07." };
   }
 
-  const geofenceMessage = geofenceError(formData);
-  if (geofenceMessage) return { status: "error", message: geofenceMessage };
+  const gateMessage = gateError(formData);
+  if (gateMessage) return { status: "error", message: gateMessage };
 
   const employee = await findEmployee(employeeId);
   if (!employee) {
@@ -101,8 +78,8 @@ export async function signOutAction(_prev: ActionState, formData: FormData): Pro
     return { status: "error", message: "ID format not supported. Please enter an ID in the format SBX-DT-2201-07." };
   }
 
-  const geofenceMessage = geofenceError(formData);
-  if (geofenceMessage) return { status: "error", message: geofenceMessage };
+  const gateMessage = gateError(formData);
+  if (gateMessage) return { status: "error", message: gateMessage };
 
   const employee = await findEmployee(employeeId);
   if (!employee) {

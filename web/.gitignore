@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# generated gate QR (contains the live GATE_QR_SECRET — never commit)
+/gate-qr.png
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

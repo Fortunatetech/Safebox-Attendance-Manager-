@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type FormEvent } from "react";
 import { VaultDial } from "@/components/ui/VaultDial";
+import { QrScanner } from "@/components/kiosk/QrScanner";
 import { signInAction, signOutAction } from "@/app/actions/attendance";
 import type { ActionState } from "@/lib/actionState";
 
@@ -9,57 +10,16 @@ type Mode = "in" | "out";
 
 const EMPTY_ID_ERROR: ActionState = { status: "error", message: "Please enter your Employee ID." };
 
-/**
- * A single getCurrentPosition() call often returns whatever fix the OS already had
- * cached (e.g. a WiFi-based position from when the phone was last on office WiFi),
- * even with maximumAge: 0 — browsers treat that as a hint, not a guarantee. Watching
- * for a few seconds gives a real GPS lock time to come in and supersede it; we keep
- * whichever reading reports the best (lowest) accuracy, and stop early once that's
- * good enough rather than always waiting out the full window.
- */
-function getBestPosition(windowMs = 6000, goodEnoughAccuracy = 25): Promise<GeolocationPosition | null> {
-  return new Promise((resolve) => {
-    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
-      resolve(null);
-      return;
-    }
-
-    let best: GeolocationPosition | null = null;
-    let watchId: number | null = null;
-
-    const finish = () => {
-      if (watchId != null) navigator.geolocation.clearWatch(watchId);
-      resolve(best);
-    };
-    const timer = setTimeout(finish, windowMs);
-
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        if (!best || pos.coords.accuracy < best.coords.accuracy) best = pos;
-        if (pos.coords.accuracy <= goodEnoughAccuracy) {
-          clearTimeout(timer);
-          finish();
-        }
-      },
-      () => {
-        clearTimeout(timer);
-        finish();
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: windowMs }
-    );
-  });
-}
-
 export function KioskConsole() {
   const [employeeId, setEmployeeId] = useState("");
   const [isPending, startTransition] = useTransition();
   const [busyMode, setBusyMode] = useState<Mode | null>(null);
-  const [locating, setLocating] = useState(false);
+  const [scanningMode, setScanningMode] = useState<Mode | null>(null);
   const [result, setResult] = useState<ActionState | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const busy = busyMode !== null || isPending;
+  const busy = busyMode !== null || isPending || scanningMode !== null;
 
   useEffect(() => {
     if (result) dialogRef.current?.showModal();
@@ -72,25 +32,24 @@ export function KioskConsole() {
     }
   }, [result]);
 
-  async function runAction(mode: Mode) {
+  function runAction(mode: Mode) {
     if (busy) return;
     if (!employeeId.trim()) {
       setResult(EMPTY_ID_ERROR);
       return;
     }
+    setScanningMode(mode);
+  }
 
+  function handleScanResult(gateCode: string) {
+    const mode = scanningMode;
+    if (!mode) return;
+    setScanningMode(null);
     setBusyMode(mode);
+
     const formData = new FormData();
     formData.set("employeeId", employeeId);
-
-    setLocating(true);
-    const pos = await getBestPosition();
-    setLocating(false);
-    if (pos) {
-      formData.set("latitude", String(pos.coords.latitude));
-      formData.set("longitude", String(pos.coords.longitude));
-      formData.set("accuracy", String(pos.coords.accuracy));
-    }
+    formData.set("gateCode", gateCode);
 
     startTransition(async () => {
       const action = mode === "in" ? signInAction : signOutAction;
@@ -99,6 +58,10 @@ export function KioskConsole() {
       setResult(res);
       if (res.status === "success") setEmployeeId("");
     });
+  }
+
+  function handleScanCancel() {
+    setScanningMode(null);
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -141,7 +104,7 @@ export function KioskConsole() {
             disabled={busy}
             className="flex h-16 items-center justify-center rounded-2xl bg-brass-500 text-base font-semibold text-graphite-950 shadow-[0_0_0_1px_rgba(217,164,65,0.35)] transition-all hover:bg-brass-400 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {locating && busyMode === "in" ? "Locating…" : busyMode === "in" ? "Verifying…" : "Sign In"}
+            {busyMode === "in" ? "Verifying…" : "Sign In"}
           </button>
           <button
             type="button"
@@ -149,7 +112,7 @@ export function KioskConsole() {
             onClick={() => runAction("out")}
             className="flex h-16 items-center justify-center rounded-2xl border border-graphite-600 bg-graphite-900/60 text-base font-semibold text-ink-100 transition-all hover:border-brass-500/60 hover:text-brass-300 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {locating && busyMode === "out" ? "Locating…" : busyMode === "out" ? "Verifying…" : "Sign Out"}
+            {busyMode === "out" ? "Verifying…" : "Sign Out"}
           </button>
         </div>
       </form>
@@ -186,6 +149,8 @@ export function KioskConsole() {
           )}
         </div>
       </dialog>
+
+      {scanningMode && <QrScanner onResult={handleScanResult} onCancel={handleScanCancel} />}
     </div>
   );
 }

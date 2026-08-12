@@ -64,34 +64,35 @@ column order doesn't need to change.
 
 Once all three are set, the app reads/writes the live sheet instead of mock data — no code changes needed.
 
-## Office geofencing (optional)
+## Office gate QR code (optional)
 
-To require staff to be physically at the office to sign in/out (blocks signing in from home or in
-transit), set `OFFICE_LAT` and `OFFICE_LNG` in `.env.local` / Vercel env vars. The kiosk then asks the
-browser for the device's GPS position on every sign-in/out and rejects the request server-side if it's
-further than `OFFICE_RADIUS_METERS` (default 150m) from that point.
+To require staff to be physically at the office gate to sign in/out, set `GATE_QR_SECRET` in
+`.env.local` / Vercel env vars. After tapping Sign In or Sign Out, the kiosk opens the phone's camera
+in-page and won't complete the action until it scans a QR code that encodes this exact value.
 
-1. Get your office's coordinates (e.g. right-click the location in Google Maps → copy the lat/lng shown).
-2. Set:
+1. Generate a secret and the matching printable QR image:
    ```
-   OFFICE_LAT=6.5244
-   OFFICE_LNG=3.3792
-   OFFICE_RADIUS_METERS=150
+   node scripts/generate-gate-qr.mjs
    ```
-3. Leave both blank to disable the check entirely — this is the default, so local dev and any deployment
-   that hasn't opted in are unaffected.
+   This prints a secret (e.g. `SBX-GATE-008dc9d92f`) and writes `gate-qr.png` in the `web/` folder.
+2. Set `GATE_QR_SECRET` in `.env.local` and in Vercel to the printed secret.
+3. Print `gate-qr.png` (laminate it if it'll live outdoors) and mount it at the gate.
+4. Leave `GATE_QR_SECRET` unset to disable the check entirely — this is the default, so local dev and
+   any deployment that hasn't opted in are unaffected.
+
+To rotate the code later (e.g. if the sign is damaged or the code leaks), re-run the script without an
+argument to get a brand-new secret + image, update `GATE_QR_SECRET`, and re-print the sign. Re-running
+with the existing secret as an argument (`node scripts/generate-gate-qr.mjs SBX-GATE-...`) just
+regenerates the image without changing the code.
 
 Notes:
-- This checks the device's **reported GPS location**, not the network it's connected to — it works over
-  Wi-Fi or cellular data, and doesn't depend on your office ISP's IP address staying stable (Starlink in
-  particular rotates IPs via CGNAT on most plans, which makes IP-based restriction unreliable).
-- Employees will get a one-time browser location-permission prompt. If they deny it, sign-in/out is
-  blocked with a clear message rather than silently failing.
-- GPS accuracy indoors can drift 20–50m, so avoid setting the radius too tight.
-- Phones sometimes return a fast, low-accuracy network-based fix instead of waiting for a real GPS lock —
-  that alone could misread as "in range" from well outside the office. `OFFICE_MAX_ACCURACY_METERS`
-  (default 100) rejects any fix worse than that and asks the user to retry, so a distance check never runs
-  against a position that can't be trusted in the first place.
+- The scan happens **per action** — signing in and signing out each require a fresh scan at the gate,
+  not just loading the page once.
+- This replaced an earlier GPS-based geofence (`OFFICE_LAT`/`OFFICE_LNG`/`OFFICE_RADIUS_METERS`), which
+  was removed after real-world testing showed phone GPS accuracy (20–50m of drift) wasn't reliable enough
+  to distinguish "at the gate" from "at a nearby desk."
+- Like any physical code, a photo of the sign could in principle be shared — this is a practical deterrent
+  for a small trusted team, not cryptographic security.
 
 ## Deploying to Vercel
 
